@@ -1,0 +1,47 @@
+import queue
+import numpy as np
+import pyflac
+import soundfile as sf
+
+idx = 0
+total_bytes = 0
+rate = 44100
+data_queue = queue.SimpleQueue()
+fid = open('decoded.txt')
+tmp = np.array
+
+def write_callback(buf: bytes, num_bytes: int, num_samples: int, frame_num: int):
+    global total_bytes
+    total_bytes += num_bytes
+    data_queue.put(buf)
+    #print(frame_num)
+    #print(buf, '\n')
+
+
+def read_callback(decoded_data: np.array, sample_rate: int,
+                  num_channels: int, num_samples: int):
+    global idx
+    global tmp
+    idx += num_samples
+    tmp = decoded_data 
+
+data = np.fromfile('coeff3.raw', dtype=np.int16, sep='\n')
+
+encoder = pyflac.StreamEncoder(rate, write_callback, blocksize = 0, verify=True)
+encoder.process(data)
+encoder.finish()
+
+decoder = pyflac.StreamDecoder(read_callback)
+while not data_queue.empty():
+    decoder.process(data_queue.get())
+decoder.finish()
+
+tmp.shape = (1, tmp.size)
+data.shape = (1, data.size)
+if(np.array_equal(tmp, data)):
+    print('Decoded value OK')
+
+print('\nUncompressed: ' +  str(data.nbytes) + ' bytes\n')
+print('Compressed: ' +  str(total_bytes) + ' bytes\n')
+print('Ratio: {ratio:.2f}%'.format(ratio= (1-(total_bytes / data.nbytes) )* 100))
+
