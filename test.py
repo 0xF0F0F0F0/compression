@@ -13,6 +13,7 @@ def write_callback(buf: bytes, num_bytes: int, num_samples: int, frame_num: int)
     global total_bytes
     total_bytes += num_bytes
     data_queue.put(buf)
+    print('\n', buf)
 
 def read_callback(decoded_data: np.array, sample_rate: int,
                   num_channels: int, num_samples: int):
