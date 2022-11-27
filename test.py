@@ -2,17 +2,21 @@ import queue
 import numpy as np
 import pyflac
 import matplotlib.pyplot as plt
+from scipy.io import wavfile
 
 idx = 0
 total_bytes = 0
 rate = 44100
 data_queue = queue.SimpleQueue()
 tmp = np.array
+f = open('files/test.flac', 'wb')  
 
 def write_callback(buf: bytes, num_bytes: int, num_samples: int, frame_num: int):
     global total_bytes
     total_bytes += num_bytes
     data_queue.put(buf)
+    f.write(buf)
+    print('Samples ', frame_num)
     print('\n', buf)
 
 def read_callback(decoded_data: np.array, sample_rate: int,
@@ -23,11 +27,13 @@ def read_callback(decoded_data: np.array, sample_rate: int,
     tmp = decoded_data 
 
 #data = np.fromfile('coeff.txt', dtype=np.int16, sep='\n')
-data = np.fromfile('coeff3.txt', dtype=np.int16, sep='\n')
+#data = np.fromfile('coeff3.txt', dtype=np.int16, sep='\n')
+samplerate, data = wavfile.read('files/djent16.wav')
 
 encoder = pyflac.StreamEncoder(rate, write_callback, blocksize = 0, verify=True)
 encoder.process(data)
 encoder.finish()
+f.close()
 
 decoder = pyflac.StreamDecoder(read_callback)
 while not data_queue.empty():
